@@ -1,6 +1,8 @@
-/**
+/*
+ * This project is licensed under the MIT license. Module model-view-viewmodel is using ZK framework licensed under LGPL (see lgpl-3.0.txt).
+ *
  * The MIT License
- * Copyright (c) 2014 Ilkka Seppälä
+ * Copyright © 2014-2022 Ilkka Seppälä
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,18 +28,18 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A mock database manager -- Fetches data from a raw file.
- * 
- * @author swaisuan
  *
  */
+@Slf4j
 public class DataFetcher {
 
-  private final String filename = "world.txt";
+  private static final String FILENAME = "world.txt";
   private long lastFetched;
 
   public DataFetcher() {
@@ -54,28 +56,22 @@ public class DataFetcher {
 
   /**
    * Fetches data/content from raw file.
-   * 
+   *
    * @return List of strings
    */
   public List<String> fetch() {
-    ClassLoader classLoader = getClass().getClassLoader();
-    File file = new File(classLoader.getResource(filename).getFile());
+    var classLoader = getClass().getClassLoader();
+    var file = new File(classLoader.getResource(FILENAME).getFile());
 
     if (isDirty(file.lastModified())) {
-      System.out.println(filename + " is dirty! Re-fetching file content...");
-
-      List<String> data = new ArrayList<String>();
-      try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          data.add(line);
-        }
+      LOGGER.info(FILENAME + " is dirty! Re-fetching file content...");
+      try (var br = new BufferedReader(new FileReader(file))) {
+        return br.lines().collect(Collectors.collectingAndThen(Collectors.toList(), List::copyOf));
       } catch (IOException e) {
-        e.printStackTrace();
+        LOGGER.error("An error occurred: ", e);
       }
-      return data;
     }
 
-    return new ArrayList<String>();
+    return List.of();
   }
 }
